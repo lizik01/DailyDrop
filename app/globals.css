@@ -1,0 +1,10 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --color-brand: #4f46e5;
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased;
+}
