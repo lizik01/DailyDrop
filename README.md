@@ -2,7 +2,11 @@
 
 An AI tech-news digest. You describe your interests in plain words. Every morning, in your timezone, an AI editor picks and writes up the stories you care about, and Resend delivers them.
 
+**Live:** https://daily-drop-coral.vercel.app (Vercel + Neon Postgres + Inngest Cloud)
+
 **Stack:** Next.js 16 · PostgreSQL · Drizzle · Vercel AI SDK · Inngest · Resend · React Email · Tailwind
+
+> The demo sends from Resend's test sender (`onboarding@resend.dev`), which only delivers to the account owner's inbox. To send to anyone, verify a domain in Resend and change `EMAIL_FROM`.
 
 ## How it works
 
@@ -88,6 +92,18 @@ npm run inngest:dev             # Inngest dev UI at http://localhost:8288
 In the Inngest UI, invoke `ingest-news` once to load articles, then sign up on the homepage. The first digest is sent right away.
 
 For webhooks, expose port 3000 (e.g. `ngrok http 3000`), add `https://…/api/webhooks/resend` as a webhook in Resend, and copy its signing secret into `RESEND_WEBHOOK_SECRET`.
+
+## Deploying
+
+The live site runs on Vercel. Every push to `main` deploys, and the `vercel-build` script runs `drizzle-kit migrate` before `next build`, so the schema is always up to date.
+
+1. **Import the repo in Vercel** and add `AI_GATEWAY_API_KEY`, `AI_MODEL`, `RESEND_API_KEY`, `EMAIL_FROM` and `LINK_SECRET`. Don't set `INNGEST_DEV` in production.
+2. **Storage → Neon.** Leave the env prefix empty so the integration creates `DATABASE_URL`. The client uses `prepare: false`, which works with Neon's pooled connection.
+3. **Inngest integration** (Vercel Marketplace). It adds `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` and syncs `/api/inngest` on every deploy. Set the custom production domain to the `*.vercel.app` URL so Vercel Deployment Protection doesn't block the sync.
+4. **Resend webhook** at `https://<domain>/api/webhooks/resend` with the `email.*` events. Put its signing secret in `RESEND_WEBHOOK_SECRET` and set `APP_URL=https://<domain>`, then redeploy.
+5. **First run:** in Inngest Cloud, invoke `ingest-news` once, then sign up on the site.
+
+Gotcha: Inngest's free plan allows at most 5 concurrent steps. A function that asks for more fails to sync, with "higher concurrency limits than your plan limit". That's why `build-digest` uses `concurrency: { limit: 5 }`.
 
 ## Layout
 
