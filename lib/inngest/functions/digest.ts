@@ -106,8 +106,18 @@ export const onboardSubscriber = inngest.createFunction(
         },
         { idempotencyKey: `welcome-${sub.id}` },
       )
-      // Resend returns errors instead of throwing; throw so Inngest retries and the failure is visible.
-      if (error) throw new Error(`Resend welcome failed: ${error.message}`)
+      if (error) {
+        // A 4xx (other than rate limiting) won't succeed on retry, e.g. Resend's test sender
+        // refusing a non-owner address. Pause them so the daily cron doesn't pay for an LLM
+        // digest that can never be delivered.
+        const permanent = error.statusCode !== null && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429
+        if (permanent) {
+          await db.update(subscribers).set({ status: 'paused' }).where(eq(subscribers.id, sub.id))
+          return null
+        }
+        // Resend returns errors instead of throwing; throw so Inngest retries and the failure is visible.
+        throw new Error(`Resend welcome failed: ${error.message}`)
+      }
       return { id: sub.id, timezone: sub.timezone }
     })
     if (!sub) return
