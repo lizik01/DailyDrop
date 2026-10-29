@@ -78,6 +78,15 @@ Duplicate sends are blocked at three levels: Inngest `idempotency` on subscriber
 - moves `digests.status` only forward, because events can arrive out of order
 - stops sending to a subscriber after a hard bounce or a spam complaint
 
+## In production
+
+The `subscribers` table on the live Neon database (emails masked):
+
+![subscribers table in Neon](docs/subscribers.png)
+
+- `topics` is what the profile LLM pulled out of each signup's plain-text interests.
+- `paused` is a subscriber whose welcome email Resend rejected for good (the test sender only delivers to the account owner). `onboard-subscriber` pauses them so the daily cron doesn't pay for a digest that can't be delivered.
+
 ## Running locally
 
 ```bash
