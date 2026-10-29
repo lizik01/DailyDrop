@@ -63,7 +63,7 @@ select source, count(*) from digests group by source;
 | --- | --- | --- |
 | `ingest-news` | cron `0 * * * *` | One step per feed, so a failing feed retries alone |
 | `schedule-digests` | cron `5 * * * *` | Timezone-aware: compares each subscriber's local hour with their `send_hour`, then fans out one event each |
-| `build-digest` | `digest/requested` | Two steps. Step 1 saves the AI output and returns only its id. If step 2 (send) fails, Inngest reruns step 2 alone and the LLM does not run again. Also idempotent per subscriber per day, with concurrency 10 |
+| `build-digest` | `digest/requested` | Two steps. Step 1 saves the AI output and returns only its id. If step 2 (send) fails, Inngest reruns step 2 alone and the LLM does not run again. Also idempotent per subscriber per day, with concurrency 5 |
 | `onboard-subscriber` | `subscriber/created` | Welcome email, then the first digest right away |
 
 Duplicate sends are blocked at three levels: Inngest `idempotency` on subscriber + day, a unique `(subscriber_id, day)` row, and a Resend `idempotencyKey` per digest.

@@ -38,7 +38,7 @@ export const buildDigest = inngest.createFunction(
     triggers: [digestRequested],
     // A duplicate event for the same subscriber + day is dropped.
     idempotency: 'event.data.subscriberId + "-" + event.data.day',
-    concurrency: { limit: 10 },
+    concurrency: { limit: 5 }, // Inngest free plan cap
     retries: 3,
   },
   async ({ event, step }) => {
